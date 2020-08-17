@@ -13,7 +13,7 @@ setup(name='datacroaker',
       license='MIT',
       packages=find_packages(),
       install_requires=[
-          'requests', 'ftputil', 'graphio', 'dateutil'
+          'requests', 'ftputil', 'graphio', 'python-dateutil'
       ],
       keywords=['data'],
       zip_safe=False,
