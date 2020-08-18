@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 from os import path
 
 setup(name='datacroaker',
-      version='0.0.2',
+      version='0.0.3',
       description='Framework for managing data from defined data sources.',
       url='https://github.com/kaiserpreusse/datacroaker',
       author='Martin Preusse',
