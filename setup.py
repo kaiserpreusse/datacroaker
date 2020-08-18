@@ -18,7 +18,6 @@ setup(name='datacroaker',
       classifiers=[
           'Programming Language :: Python',
           'Development Status :: 3 - Alpha',
-          'Intended Audience :: Developers',
-          'License :: OSI Approved :: Apache Software License'
+          'Intended Audience :: Developers'
       ],
       )

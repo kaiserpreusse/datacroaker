@@ -1,6 +1,7 @@
 import os
 import logging
 import shutil
+from datetime import datetime
 
 from datacroaker.datasourceinstance import DataSourceInstance
 
@@ -80,6 +81,9 @@ class BaseDataSource():
                     latest = instance
         return latest
 
+    def download(self):
+        raise NotImplementedError
+
 
 class RemoteDataSource(BaseDataSource):
 
@@ -104,11 +108,33 @@ class RollingReleaseRemoteDataSource(RemoteDataSource):
     def __init__(self, root_dir):
         super(RollingReleaseRemoteDataSource, self).__init__(root_dir)
 
+    def download(self, *args, **kwargs):
+        self.pre_download()
 
-class VersionAccessibleRemoteDataSource(RemoteDataSource):
+        instance = DataSourceInstance(self)
+        instance.started = datetime.now()
+        instance.download_date = datetime.today()
+
+        try:
+            instance.prepare_download()
+
+            # run the download function defined in the implementing class.
+            self.download_function(instance, *args, **kwargs)
+
+            instance.wrap_up()
+        except:
+            instance.on_error()
+            raise
+        finally:
+            self.post_download()
+
+        return instance
+
+
+class ManyVersionsRemoteDataSource(RemoteDataSource):
 
     def __init__(self, root_dir):
-        super(VersionAccessibleRemoteDataSource, self).__init__(root_dir)
+        super(ManyVersionsRemoteDataSource, self).__init__(root_dir)
 
     def all_remote_versions(self):
         raise NotImplementedError
@@ -123,15 +149,51 @@ class VersionAccessibleRemoteDataSource(RemoteDataSource):
         if version in self.all_remote_versions():
             return True
 
+    def download(self, version, *args, **kwargs):
+        """
+        Download a specific version.
 
-class SingleVersionRemoteDataSource(VersionAccessibleRemoteDataSource):
+        :param version: The version.
+        :param taxids: Optional list of taxonomy IDs to limit download.
+        :type version: DataSourceVersion
+        """
+        self.pre_download()
+
+        instance = DataSourceInstance(self)
+        instance.started = datetime.now()
+        instance.download_date = datetime.today()
+
+        instance.version = str(version)
+
+        try:
+            instance.prepare_download()
+
+            self.download_function(instance, version, *args, **kwargs)
+
+            instance.wrap_up()
+        except:
+            instance.on_error()
+            raise
+        finally:
+            self.post_download()
+
+        return instance
+
+
+class SingleVersionRemoteDataSource(RemoteDataSource):
     """
     DataSource class for a remote data source with defined versions where only
     one (usually the last one) version can be downloaded.
+
+    The DataSource knows the specific name of the accessible version and returns on
+    all version functions.
     """
 
     def __init__(self, root_dir):
         super(SingleVersionRemoteDataSource, self).__init__(root_dir)
+
+    def latest_remote_version(self):
+        raise NotImplementedError
 
     def version_downloadable(self, version):
         """
@@ -139,3 +201,29 @@ class SingleVersionRemoteDataSource(VersionAccessibleRemoteDataSource):
         """
         if version == self.latest_remote_version():
             return True
+
+    def download(self, *args, **kwargs):
+        self.pre_download()
+        version = self.latest_remote_version()
+
+        instance = DataSourceInstance(self)
+        instance.started = datetime.now()
+        instance.download_date = datetime.today()
+
+        instance.version = str(version)
+
+        try:
+            instance.prepare_download()
+
+            if self.version_downloadable(version):
+                # run the download function defined in the implementing class.
+                self.download_function(instance, version, *args, **kwargs)
+            instance.wrap_up()
+
+        except:
+            instance.on_error()
+            raise
+        finally:
+            self.post_download()
+
+        return instance
