@@ -31,16 +31,6 @@ class BaseDataSource():
     def list_instances(self):
         return os.listdir(self.ds_dir)
 
-    def current_downloads_in_process(self):
-        """
-        Return a list of current instances that are in process.
-        """
-        instances_in_process = []
-        for instance in self.list_instances():
-            if instance.startswith('process_'):
-                instances_in_process.append(instance)
-        return instances_in_process
-
     @property
     def instances_local(self):
         """
@@ -81,8 +71,11 @@ class BaseDataSource():
                     latest = instance
         return latest
 
-    def download(self):
-        raise NotImplementedError
+
+class FileSystemDataSource(BaseDataSource):
+
+    def __init__(self, root_dir):
+        super(FileSystemDataSource, self).__init__(root_dir)
 
 
 class RemoteDataSource(BaseDataSource):
@@ -90,17 +83,27 @@ class RemoteDataSource(BaseDataSource):
     def __init__(self, root_dir):
         super(RemoteDataSource, self).__init__(root_dir)
 
+    def download(self):
+        raise NotImplementedError
+
+    def download_function(self):
+        raise NotImplementedError
+
     def pre_download(self):
-        """
-        Settings and changes before a download becomes active.
-        """
-        pass
+        raise NotImplementedError
 
     def post_download(self):
+        raise NotImplementedError
+
+    def current_downloads_in_process(self):
         """
-        Settings and changes after a download (independent of success/error).
+        Return a list of current instances that are in process.
         """
-        pass
+        instances_in_process = []
+        for instance in self.list_instances():
+            if instance.startswith('process_'):
+                instances_in_process.append(instance)
+        return instances_in_process
 
 
 class RollingReleaseRemoteDataSource(RemoteDataSource):
