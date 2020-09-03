@@ -90,10 +90,10 @@ class RemoteDataSource(BaseDataSource):
         raise NotImplementedError
 
     def pre_download(self):
-        raise NotImplementedError
+        pass
 
     def post_download(self):
-        raise NotImplementedError
+        pass
 
     def current_downloads_in_process(self):
         """
