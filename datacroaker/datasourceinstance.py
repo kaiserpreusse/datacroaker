@@ -53,7 +53,9 @@ class DataSourceInstance():
             datasourceinstance = cls(datasource, formatted_properties['uuid'])
 
             for k, v in formatted_properties.items():
-                setattr(datasourceinstance, k, v)
+                # TODO make sure not to store the directories in metadata instead of skipping here
+                if '_dir' not in k:
+                    setattr(datasourceinstance, k, v)
 
             return datasourceinstance
 
@@ -72,7 +74,7 @@ class DataSourceInstance():
         output_dict = {}
 
         for k, v in self.__dict__.items():
-            if not k.startswith('__') and not callable(v) and isinstance(v, str):
+            if not k.startswith('__') and not callable(v) and isinstance(v, str) and '_dir' not in k:
                 output_dict[k] = getattr(self, k)
 
         with open(instance_metadata_path, 'w') as f:
